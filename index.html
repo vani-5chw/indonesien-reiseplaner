@@ -550,14 +550,14 @@
     <script>
         // Route configuration
         const routeStops = [
-            { id: 'ubud', name: 'Ubud', nights: 4 },
-            { id: 'sidemen', name: 'Sidemen', nights: 2 },
-            { id: 'amed', name: 'Amed', nights: 1 },
-            { id: 'gili', name: 'Gili Air/Meno', nights: 2 },
-            { id: 'ijen', name: 'Java Ijen', nights: 2 },
-            { id: 'bromo', name: 'Bromo', nights: 1 },
-            { id: 'yogya', name: 'Yogyakarta', nights: 2 },
-            { id: 'jakarta', name: 'Jakarta', nights: 1 }
+            { id: 'ubud', name: 'Ubud', nights: 4, dates: '20.-24. Aug' },
+            { id: 'sidemen', name: 'Sidemen', nights: 2, dates: '24.-26. Aug' },
+            { id: 'amed', name: 'Amed', nights: 1, dates: '26.-27. Aug' },
+            { id: 'gili', name: 'Gili Air/Meno', nights: 2, dates: '27.-29. Aug' },
+            { id: 'ijen', name: 'Java Ijen', nights: 2, dates: '29.-31. Aug' },
+            { id: 'bromo', name: 'Bromo', nights: 1, dates: '31. Aug-1. Sep' },
+            { id: 'yogya', name: 'Yogyakarta', nights: 2, dates: '1.-3. Sep' },
+            { id: 'jakarta', name: 'Jakarta', nights: 1, dates: '3.-4. Sep' }
         ];
 
         // Days configuration
@@ -589,7 +589,7 @@
                 const item = document.createElement('div');
                 item.className = 'route-item';
                 item.innerHTML = `
-                    <div class="route-day">${stop.nights} Nacht${stop.nights > 1 ? 'e' : ''}</div>
+                    <div class="route-day">${stop.nights} Nacht${stop.nights > 1 ? 'e' : ''} • ${stop.dates}</div>
                     <div class="route-title">${stop.name}</div>
                     <label>🏨 Hotel-Name:</label>
                     <input type="text" id="${stop.id}-name" placeholder="Hotel-Name">
