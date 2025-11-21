@@ -437,7 +437,8 @@
                             <div class="route-day">Hinflug • 20. Aug</div>
                             <div class="route-title">SZG → DPS</div>
                             <label>🔗 Buchungslink:</label>
-                            <input type="url" id="flight-out-link" placeholder="CheckFelix Link...">
+                            <input type="url" id="flight-out-link" placeholder="CheckFelix Link..." onchange="toggleFlightLinkButton('out')">
+                            <button id="flight-out-link-btn" onclick="openFlightLink('out')" style="display: none; background: #10b981; margin-top: 8px;">🔗 Flug öffnen</button>
                             <div class="grid-2">
                                 <div>
                                     <label>Airline:</label>
@@ -454,7 +455,8 @@
                             <div class="route-day">Rückflug • 4. Sep</div>
                             <div class="route-title">JKT → SZG</div>
                             <label>🔗 Buchungslink:</label>
-                            <input type="url" id="flight-return-link" placeholder="CheckFelix Link...">
+                            <input type="url" id="flight-return-link" placeholder="CheckFelix Link..." onchange="toggleFlightLinkButton('return')">
+                            <button id="flight-return-link-btn" onclick="openFlightLink('return')" style="display: none; background: #10b981; margin-top: 8px;">🔗 Flug öffnen</button>
                             <div class="grid-2">
                                 <div>
                                     <label>Airline:</label>
@@ -592,7 +594,8 @@
                     <label>🏨 Hotel-Name:</label>
                     <input type="text" id="${stop.id}-name" placeholder="Hotel-Name">
                     <label>🔗 Booking-Link:</label>
-                    <input type="url" id="${stop.id}-link" placeholder="Booking.com Link">
+                    <input type="url" id="${stop.id}-link" placeholder="Booking.com Link" onchange="toggleLinkButton('${stop.id}')">
+                    <button id="${stop.id}-link-btn" onclick="openHotelLink('${stop.id}')" style="display: none; background: #10b981; margin-top: 8px;">🔗 Hotel öffnen</button>
                     <div class="grid-2">
                         <div>
                             <label>💰 Preis/Nacht (€):</label>
@@ -653,6 +656,40 @@
             const total = price * nights;
             document.getElementById(`${stopId}-total`).value = `€${total}`;
             updateBudget();
+        }
+
+        // Toggle link button visibility
+        function toggleLinkButton(stopId) {
+            const link = document.getElementById(`${stopId}-link`)?.value || '';
+            const btn = document.getElementById(`${stopId}-link-btn`);
+            if (btn) {
+                btn.style.display = link.trim() ? 'block' : 'none';
+            }
+        }
+
+        // Open hotel link
+        function openHotelLink(stopId) {
+            const link = document.getElementById(`${stopId}-link`)?.value || '';
+            if (link.trim()) {
+                window.open(link, '_blank');
+            }
+        }
+
+        // Toggle flight link button
+        function toggleFlightLinkButton(type) {
+            const link = document.getElementById(`flight-${type}-link`)?.value || '';
+            const btn = document.getElementById(`flight-${type}-link-btn`);
+            if (btn) {
+                btn.style.display = link.trim() ? 'block' : 'none';
+            }
+        }
+
+        // Open flight link
+        function openFlightLink(type) {
+            const link = document.getElementById(`flight-${type}-link`)?.value || '';
+            if (link.trim()) {
+                window.open(link, '_blank');
+            }
         }
 
         // Update budget
@@ -797,6 +834,10 @@
                         document.getElementById('flight-return-link').value = data.flights.return.link || '';
                         document.getElementById('flight-return-airline').value = data.flights.return.airline || '';
                         document.getElementById('flight-return-price').value = data.flights.return.price || '0';
+                        
+                        // Show link buttons if links exist
+                        toggleFlightLinkButton('out');
+                        toggleFlightLinkButton('return');
                     }
 
                     // Load hotels
@@ -807,6 +848,9 @@
                             document.getElementById(`${hotelId}-link`).value = hotel.link || '';
                             document.getElementById(`${hotelId}-price`).value = hotel.price || '0';
                             document.getElementById(`${hotelId}-notes`).value = hotel.notes || '';
+                            
+                            // Show link button if link exists
+                            toggleLinkButton(hotelId);
                             
                             const stop = routeStops.find(s => s.id === hotelId);
                             if (stop) updateHotelTotal(hotelId, stop.nights);
