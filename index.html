@@ -746,42 +746,59 @@
             event.target.classList.add('active');
         }
 
-        // Collect all data
+        // Collect all data (optimized - only non-empty values)
         function collectAllData() {
-            const data = {
-                flights: {
-                    out: {
-                        link: document.getElementById('flight-out-link')?.value || '',
-                        airline: document.getElementById('flight-out-airline')?.value || '',
-                        price: document.getElementById('flight-out-price')?.value || '0'
-                    },
-                    return: {
-                        link: document.getElementById('flight-return-link')?.value || '',
-                        airline: document.getElementById('flight-return-airline')?.value || '',
-                        price: document.getElementById('flight-return-price')?.value || '0'
-                    }
-                },
-                hotels: {},
-                visa: document.getElementById('visa-cost')?.value || '0',
-                dailyBudget: {}
-            };
+            const data = {};
 
-            routeStops.forEach(stop => {
-                data.hotels[stop.id] = {
-                    name: document.getElementById(`${stop.id}-name`)?.value || '',
-                    link: document.getElementById(`${stop.id}-link`)?.value || '',
-                    price: document.getElementById(`${stop.id}-price`)?.value || '0',
-                    notes: document.getElementById(`${stop.id}-notes`)?.value || ''
-                };
-            });
+            // Flights (only if filled)
+            const flightOutLink = document.getElementById('flight-out-link')?.value || '';
+            const flightOutAirline = document.getElementById('flight-out-airline')?.value || '';
+            const flightOutPrice = document.getElementById('flight-out-price')?.value || '0';
+            const flightReturnLink = document.getElementById('flight-return-link')?.value || '';
+            const flightReturnAirline = document.getElementById('flight-return-airline')?.value || '';
+            const flightReturnPrice = document.getElementById('flight-return-price')?.value || '0';
 
-            days.forEach(day => {
-                data.dailyBudget[`day${day.day}`] = {
-                    transport: document.getElementById(`day${day.day}-transport`)?.value || '0',
-                    food: document.getElementById(`day${day.day}-food`)?.value || '0',
-                    activities: document.getElementById(`day${day.day}-activities`)?.value || '0'
-                };
+            if (flightOutLink || flightOutAirline || flightOutPrice !== '0') {
+                data.fo = [flightOutLink, flightOutAirline, flightOutPrice];
+            }
+            if (flightReturnLink || flightReturnAirline || flightReturnPrice !== '0') {
+                data.fr = [flightReturnLink, flightReturnAirline, flightReturnPrice];
+            }
+
+            // Hotels (only non-empty)
+            data.h = {};
+            let hasHotels = false;
+            routeStops.forEach((stop, i) => {
+                const name = document.getElementById(`${stop.id}-name`)?.value || '';
+                const link = document.getElementById(`${stop.id}-link`)?.value || '';
+                const price = document.getElementById(`${stop.id}-price`)?.value || '0';
+                const notes = document.getElementById(`${stop.id}-notes`)?.value || '';
+                
+                if (name || link || price !== '0' || notes) {
+                    data.h[i] = [name, link, price, notes];
+                    hasHotels = true;
+                }
             });
+            if (!hasHotels) delete data.h;
+
+            // Visa
+            const visa = document.getElementById('visa-cost')?.value || '0';
+            if (visa !== '0') data.v = visa;
+
+            // Daily budget (only non-zero days)
+            data.d = {};
+            let hasBudget = false;
+            days.forEach((day, i) => {
+                const transport = document.getElementById(`day${day.day}-transport`)?.value || '0';
+                const food = document.getElementById(`day${day.day}-food`)?.value || '0';
+                const activities = document.getElementById(`day${day.day}-activities`)?.value || '0';
+                
+                if (transport !== '0' || food !== '0' || activities !== '0') {
+                    data.d[i] = [transport, food, activities];
+                    hasBudget = true;
+                }
+            });
+            if (!hasBudget) delete data.d;
 
             return data;
         }
@@ -790,7 +807,13 @@
         function shareData() {
             const data = collectAllData();
             const compressed = btoa(encodeURIComponent(JSON.stringify(data)));
-            const url = window.location.href.split('?')[0] + '?data=' + compressed;
+            const baseUrl = window.location.href.split('?')[0];
+            const url = baseUrl + '?data=' + compressed;
+            
+            // Check URL length
+            if (url.length > 2000) {
+                alert('⚠️ Hinweis: Der Link ist sehr lang!\n\nTipp: Teile nur die wichtigsten Daten oder nutze mehrere Links für verschiedene Bereiche (z.B. einen für Hotels, einen für Budget).');
+            }
             
             document.getElementById('shareLink').textContent = url;
             document.getElementById('shareModal').classList.add('show');
@@ -827,48 +850,50 @@
                     const data = JSON.parse(decodeURIComponent(atob(dataParam)));
                     
                     // Load flights
-                    if (data.flights) {
-                        document.getElementById('flight-out-link').value = data.flights.out.link || '';
-                        document.getElementById('flight-out-airline').value = data.flights.out.airline || '';
-                        document.getElementById('flight-out-price').value = data.flights.out.price || '0';
-                        document.getElementById('flight-return-link').value = data.flights.return.link || '';
-                        document.getElementById('flight-return-airline').value = data.flights.return.airline || '';
-                        document.getElementById('flight-return-price').value = data.flights.return.price || '0';
-                        
-                        // Show link buttons if links exist
+                    if (data.fo) {
+                        document.getElementById('flight-out-link').value = data.fo[0] || '';
+                        document.getElementById('flight-out-airline').value = data.fo[1] || '';
+                        document.getElementById('flight-out-price').value = data.fo[2] || '0';
                         toggleFlightLinkButton('out');
+                    }
+                    if (data.fr) {
+                        document.getElementById('flight-return-link').value = data.fr[0] || '';
+                        document.getElementById('flight-return-airline').value = data.fr[1] || '';
+                        document.getElementById('flight-return-price').value = data.fr[2] || '0';
                         toggleFlightLinkButton('return');
                     }
 
                     // Load hotels
-                    if (data.hotels) {
-                        Object.keys(data.hotels).forEach(hotelId => {
-                            const hotel = data.hotels[hotelId];
-                            document.getElementById(`${hotelId}-name`).value = hotel.name || '';
-                            document.getElementById(`${hotelId}-link`).value = hotel.link || '';
-                            document.getElementById(`${hotelId}-price`).value = hotel.price || '0';
-                            document.getElementById(`${hotelId}-notes`).value = hotel.notes || '';
-                            
-                            // Show link button if link exists
-                            toggleLinkButton(hotelId);
-                            
-                            const stop = routeStops.find(s => s.id === hotelId);
-                            if (stop) updateHotelTotal(hotelId, stop.nights);
+                    if (data.h) {
+                        Object.keys(data.h).forEach(i => {
+                            const hotel = data.h[i];
+                            const stop = routeStops[parseInt(i)];
+                            if (stop) {
+                                document.getElementById(`${stop.id}-name`).value = hotel[0] || '';
+                                document.getElementById(`${stop.id}-link`).value = hotel[1] || '';
+                                document.getElementById(`${stop.id}-price`).value = hotel[2] || '0';
+                                document.getElementById(`${stop.id}-notes`).value = hotel[3] || '';
+                                toggleLinkButton(stop.id);
+                                updateHotelTotal(stop.id, stop.nights);
+                            }
                         });
                     }
 
                     // Load visa
-                    if (data.visa) {
-                        document.getElementById('visa-cost').value = data.visa;
+                    if (data.v) {
+                        document.getElementById('visa-cost').value = data.v;
                     }
 
                     // Load daily budget
-                    if (data.dailyBudget) {
-                        Object.keys(data.dailyBudget).forEach(dayId => {
-                            const dayData = data.dailyBudget[dayId];
-                            document.getElementById(`${dayId}-transport`).value = dayData.transport || '0';
-                            document.getElementById(`${dayId}-food`).value = dayData.food || '0';
-                            document.getElementById(`${dayId}-activities`).value = dayData.activities || '0';
+                    if (data.d) {
+                        Object.keys(data.d).forEach(i => {
+                            const dayData = data.d[i];
+                            const day = days[parseInt(i)];
+                            if (day) {
+                                document.getElementById(`day${day.day}-transport`).value = dayData[0] || '0';
+                                document.getElementById(`day${day.day}-food`).value = dayData[1] || '0';
+                                document.getElementById(`day${day.day}-activities`).value = dayData[2] || '0';
+                            }
                         });
                     }
 
